@@ -2,6 +2,38 @@ import numpy as np
 from math import sqrt
 from scipy import signal
 
+
+class Activation(object):
+    class Relu(object):
+        @staticmethod
+        def activation(preact):
+            return np.where(preact > 0, preact, np.zeros(preact.shape))
+        @staticmethod
+        def derivative(preact):
+            return np.where(preact > 0, np.ones(preact.shape), np.zeros(preact.shape))
+
+    class Sigmoid(object):
+        @staticmethod
+        def activation(preact):
+            d = np.exp(-preact)
+            return 1/(1+d)
+        @staticmethod
+        def derivative(preact):
+            d = np.exp(-preact)
+            return d/(1 - d)**2
+
+    class Softmax(object):
+        @staticmethod
+        def activation(preact):
+            d = np.exp(preact)
+            return d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
+        @staticmethod
+        def derivative(preact):
+            d = np.exp(preact)
+            d = d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
+            return d*(1-d)
+
+
 class FullyConnectedLayer(object):
     def __init__(self, weights, biases, activation):
         self.weights = weights
@@ -22,8 +54,8 @@ class FullyConnectedLayer(object):
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus))
         weights_l = np.copy(self.weights)
 
-        self.weights = self.weights - learning_rate/n * delta_w
-        self.biases = self.biases - learning_rate/n * delta_b
+        self.weights = self.weights - learning_rate * delta_w/n
+        self.biases = self.biases - learning_rate * delta_b/n
 
         return delta_l, weights_l  # for use in previous layers
 
@@ -39,17 +71,23 @@ class FinalLayer(object):
         self.cost = cost.cost
         self.d_cost = cost.derivative
         if cost.name == 'cross_entropy':
-            self.activation = activation_function.softmax.activation
-            self.d_activation = activation_function.softmax.derivative
+            self.activation = Activation.Softmax.activation
+            self.d_activation = Activation.Softmax.derivative
 
     def feedforward(self, ff_input):
         self.preactivate = np.add(np.matmul(self.weights, ff_input), self.biases)
         self.output = self.activation(self.preactivate)
         return self.output
 
-    def backpropagation(self, y):
+    def backpropagation(self, y, a_l_minus, learning_rate, n):
         delta_l = np.matmul(np.diagflat(self.d_activation(self.preactivate)), self.d_cost(y, self.output))
+        delta_b = delta_l
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus))
         weights_l = np.copy(self.weights)
+
+        self.weights = self.weights - learning_rate*delta_w/n
+        self.biases = self.biases - learning_rate*delta_b/n
+
         return delta_l, weights_l
 
 
@@ -67,16 +105,36 @@ class ConvolutionalLayer(object):
         return output
 
     def backpropagation(self, a_l_minus, weights_l_plus, delta_l_plus, learning_rate, n):
-
         if a_l_minus.ndim > 2:
             w = a_l_minus.shape[1]
             l = a_l_minus.shape[2]
+            out_channels = a_l_minus.shape[3]
         else:
             w = int(sqrt(a_l_minus.shape[1]))
             l = w
-        a_l_minus = np.reshape(a_l_minus, (-1, w, l))
-        delta_w = signal.correlate2d(a_l_minus, )
-    def backpropagation(self, ):
+            out_channels = 1
+        a_l_minus = np.reshape(a_l_minus, (-1, w, l, out_channels))
+        delta_l = np.multiply(signal.correlate2d(delta_l_plus, weights_l_plus), self.d_activation(self.preactivate))
+        delta_w = signal.correlate2d(a_l_minus, delta_l)
+        delta_b = np.sum(delta_l, axis = (1, 2))
+
+        window_l = np.copy(self.window)
+
+        self.window = self.window - learning_rate*delta_w/n
+        self.biases = self.biases - learning_rate*delta_b/n
+        return delta_l, window_l
+
+
+class MaxPoolLayer(object):
+    def __init__(self, stride, ksize):
+        self.stride = stride
+        self.ksize = ksize
+
+    def feedforward(self, ff_input):
+        print('feedforward method in class MaxPoolLayer not implemented.')
+
+    def backpropagation(self, ff_input):
+        print('backpropagation method in class MaxPoolLayer not implemented.')
 
 if __name__ == '__main__':
-    print('Operations')
+    print('Operations intended only for importing into other files')

@@ -6,5 +6,3 @@ class Network(object):
         self.num_ops = len(op_list)
         self.op_list = op_list
 
-
-class
