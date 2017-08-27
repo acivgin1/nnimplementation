@@ -8,6 +8,7 @@ class Activation(object):
         @staticmethod
         def activation(preact):
             return np.where(preact > 0, preact, np.zeros(preact.shape))
+
         @staticmethod
         def derivative(preact):
             return np.where(preact > 0, np.ones(preact.shape), np.zeros(preact.shape))
@@ -17,6 +18,7 @@ class Activation(object):
         def activation(preact):
             d = np.exp(-preact)
             return 1/(1+d)
+
         @staticmethod
         def derivative(preact):
             d = np.exp(-preact)
@@ -27,11 +29,14 @@ class Activation(object):
         def activation(preact):
             d = np.exp(preact)
             return d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
+
         @staticmethod
         def derivative(preact):
             d = np.exp(preact)
             d = d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
             return d*(1-d)
+
+# istestirano, radi
 
 
 class FullyConnectedLayer(object):
@@ -48,10 +53,19 @@ class FullyConnectedLayer(object):
         return output  # for use in next layers and backpropagation
 
     def backpropagation(self, a_l_minus, weights_l_plus, delta_l_plus, learning_rate, n):
-        sigma_z_l = np.diagflat(self.d_activation(self.preactivate))
+        sigma_z_l = np.zeros((1, self.preactivate.shape[1], self.preactivate.shape[1]))
+        for i in range(self.preactivate.shape[0]):
+            if i == 0:
+                sigma_z_l = np.diagflat(self.d_activation(self.preactivate[i, :, :]))
+                sigma_z_l = sigma_z_l.reshape((1, self.preactivate.shape[1], -1))
+            else:
+                temp = np.diagflat(self.d_activation(self.preactivate[i, :, :]))
+                temp = temp.reshape((1, sigma_z_l.shape[1], -1))
+                sigma_z_l = np.concatenate((sigma_z_l, temp), 0)
+        # sigma_z_l = np.diagflat(self.d_activation(self.preactivate[:,]))
         delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))
         delta_b = delta_l
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus))
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1)))
         weights_l = np.copy(self.weights)
 
         self.weights = self.weights - learning_rate * delta_w/n
@@ -138,3 +152,5 @@ class MaxPoolLayer(object):
 
 if __name__ == '__main__':
     print('Operations intended only for importing into other files')
+else:
+    print('Successfuly imported operations.py')
