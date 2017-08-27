@@ -27,28 +27,29 @@ if testFullyConnectedLayer:
     for i in range(38, 40):
         for j in range(38, 40):
             for k in range(28, 32):
-                input = np.random.rand(batch_size, i, 1)
+                ff_input = np.random.rand(batch_size, i, 1)
                 weights = np.random.rand(j, i)
                 biases = np.random.rand(j, 1)
                 fcl = FullyConnectedLayer(weights, biases, activation)
                 for _ in range(5):
-                    output = fcl.feedforward(input)
+                    output = fcl.feedforward(ff_input)
 
                     a_l_minus = np.random.rand(batch_size, i, 1)
                     weights_l_plus = np.random.rand(k, j)
                     delta_l_plus = np.random.rand(batch_size, k, 1)
 
-                    delta_l, weights_l = fcl.backpropagation(a_l_minus, weights_l_plus, delta_l_plus, learning_rate, batch_size)
+                    delta_l, weights_l = fcl.backpropagation(a_l_minus, weights_l_plus, delta_l_plus, learning_rate,
+                                                             batch_size)
     print('FullyConnected: OK')
-    input = np.ones((2048, 4, 1))
+    ff_input = np.ones((2048, 4, 1))
     weights = np.ndarray((5, 4))
     biases = np.ndarray((5, 1))
 
     fcl = FullyConnectedLayer(weights, biases, activation)
-    output = fcl.feedforward(input)
+    output = fcl.feedforward(ff_input)
 
     if print_shapes:
-        print('input:          ', input.shape)
+        print('input:          ', ff_input.shape)
         print('weights:        ', weights.shape)
         print('biases:         ', biases.shape)
         print(' - output:      ', output.shape)
@@ -67,9 +68,9 @@ if testFullyConnectedLayer:
         print(' - weights_l:   ', weights_l.shape)
         print('')
 
-    output = fcl.feedforward(input)
+    output = fcl.feedforward(ff_input)
     if print_shapes:
-        print('input:          ', input.shape)
+        print('input:          ', ff_input.shape)
         print('weights:        ', weights.shape)
         print('biases:         ', biases.shape)
         print(' - output:      ', output.shape)
@@ -120,4 +121,3 @@ if testNetworkFF:
     print('Hi')
 
 print("--- {} seconds ---".format(datetime.now() - start_time))
-
