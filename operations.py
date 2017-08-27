@@ -2,16 +2,43 @@ import numpy as np
 from math import sqrt
 from scipy import signal
 
+np.seterr(divide='ignore', invalid='ignore', over='ignore')
+
+print('\033[91m' + 'WARNING: Probably could sum a_l_minus, delta_l along axis = 0, for speed up and memory saving' + '\033[0m')
+
+
+class Cost(object):
+    class LMS(object):
+        @staticmethod
+        def cost(labels, output):
+            return 0.5 * np.square(np.subtract(labels, output)).sum()
+
+        @staticmethod
+        def derivative(preact, labels, output, d_activation):
+            sigma_z_l = d_activation(preact)
+            sigma_z_l = np.matmul(sigma_z_l, np.ones((1, sigma_z_l.shape[1])))
+            return np.matmul(sigma_z_l, np.subtract(output, labels).sum(0))
+
+    class CrossEntropy(object):
+        @staticmethod
+        def cost(labels, output):
+            return -np.nan_to_num(np.add(np.multiply(labels, np.log(output)), np.multiply((1-labels),
+                                                                                          np.log1p(-output)))).sum()
+
+        @staticmethod
+        def derivative(preact, labels, output, d_activation):
+            return np.subtract(labels, output).sum(0)
+
 
 class Activation(object):
     class Relu(object):
         @staticmethod
         def activation(preact):
-            return np.where(preact > 0, preact, np.zeros(preact.shape))
+            return np.where(preact > 0.0, preact, np.zeros(preact.shape))
 
         @staticmethod
         def derivative(preact):
-            return np.where(preact > 0, np.ones(preact.shape), np.zeros(preact.shape))
+            return np.where(preact > 0.0, np.ones(preact.shape), np.zeros(preact.shape))
 
     class Sigmoid(object):
         @staticmethod
@@ -28,18 +55,16 @@ class Activation(object):
         @staticmethod
         def activation(preact):
             d = np.exp(preact)
-            return d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
+            return d/np.transpose(np.sum(d, axis=1).reshape([1, -1, 1]), (1, 0, 2))
 
         @staticmethod
         def derivative(preact):
             d = np.exp(preact)
-            d = d/np.transpose(np.sum(d, axis=1).reshape([1, -1]))
+            d = d/np.transpose(np.sum(d, axis=1).reshape([1, -1, 1]), (1, 0, 2))
             return d*(1-d)
 
-# istestirano, radi
 
-
-class FullyConnectedLayer(object):
+class FullyConnectedLayer(object):  # istestirano, radi
     def __init__(self, weights, biases, activation):
         self.weights = weights
         self.biases = biases
@@ -52,25 +77,16 @@ class FullyConnectedLayer(object):
         output = self.activation(self.preactivate)
         return output  # for use in next layers and backpropagation
 
-    def backpropagation(self, a_l_minus, weights_l_plus, delta_l_plus, learning_rate, n):
-        sigma_z_l = np.zeros((1, self.preactivate.shape[1], self.preactivate.shape[1]))
-        for i in range(self.preactivate.shape[0]):
-            if i == 0:
-                sigma_z_l = np.diagflat(self.d_activation(self.preactivate[i, :, :]))
-                sigma_z_l = sigma_z_l.reshape((1, self.preactivate.shape[1], -1))
-            else:
-                temp = np.diagflat(self.d_activation(self.preactivate[i, :, :]))
-                temp = temp.reshape((1, sigma_z_l.shape[1], -1))
-                sigma_z_l = np.concatenate((sigma_z_l, temp), 0)
-        # sigma_z_l = np.diagflat(self.d_activation(self.preactivate[:,]))
-        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))
-        delta_b = delta_l
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1)))
+    def backpropagation(self, a_l_minus, weights_l_plus, delta_l_plus, learning_rate, batch_size):
+        sigma_z_l = self.d_activation(self.preactivate)
+        sigma_z_l = np.matmul(sigma_z_l, np.ones((1, sigma_z_l.shape[1])))
+
+        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus)).sum(0)
+        delta_b = delta_l.sum(0)
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
-
-        self.weights = self.weights - learning_rate * delta_w/n
-        self.biases = self.biases - learning_rate * delta_b/n
-
+        self.weights = self.weights - learning_rate * delta_w/batch_size
+        self.biases = self.biases - learning_rate * delta_b/batch_size
         return delta_l, weights_l  # for use in previous layers
 
 
@@ -84,7 +100,7 @@ class FinalLayer(object):
         self.d_activation = activation.derivative
         self.cost = cost.cost
         self.d_cost = cost.derivative
-        if cost.name == 'cross_entropy':
+        if cost == Cost.CrossEntropy:
             self.activation = Activation.Softmax.activation
             self.d_activation = Activation.Softmax.derivative
 
@@ -93,14 +109,14 @@ class FinalLayer(object):
         self.output = self.activation(self.preactivate)
         return self.output
 
-    def backpropagation(self, y, a_l_minus, learning_rate, n):
-        delta_l = np.matmul(np.diagflat(self.d_activation(self.preactivate)), self.d_cost(y, self.output))
-        delta_b = delta_l
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus))
+    def backpropagation(self, y, a_l_minus, learning_rate, batch_size):
+        delta_l = self.d_cost(self.preactivate, y, self.output, self.d_activation)
+        delta_b = delta_l.sum(0)
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
 
-        self.weights = self.weights - learning_rate*delta_w/n
-        self.biases = self.biases - learning_rate*delta_b/n
+        self.weights = self.weights - learning_rate*delta_w/batch_size
+        self.biases = self.biases - learning_rate*delta_b/batch_size
 
         return delta_l, weights_l
 
@@ -130,7 +146,7 @@ class ConvolutionalLayer(object):
         a_l_minus = np.reshape(a_l_minus, (-1, w, l, out_channels))
         delta_l = np.multiply(signal.correlate2d(delta_l_plus, weights_l_plus), self.d_activation(self.preactivate))
         delta_w = signal.correlate2d(a_l_minus, delta_l)
-        delta_b = np.sum(delta_l, axis = (1, 2))
+        delta_b = np.sum(delta_l, axis=(1, 2))
 
         window_l = np.copy(self.window)
 
@@ -151,6 +167,6 @@ class MaxPoolLayer(object):
         print('backpropagation method in class MaxPoolLayer not implemented.')
 
 if __name__ == '__main__':
-    print('Operations intended only for importing into other files')
+    print('\033[91m' + 'WARNING: operations.py intended only for use in other files' + '\033[0m')
 else:
-    print('Successfuly imported operations.py')
+    print('\033[94m' + 'OK: Successfuly imported operations.py' + '\033[0m')
