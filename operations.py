@@ -77,13 +77,15 @@ class FullyConnectedLayer(object):  # istestirano, radi
         output = self.activation(self.preactivate)
         return output  # for use in next layers and backpropagation
 
-    def backpropagation(self, a_l_minus, weights_l_plus, delta_l_plus, learning_rate, batch_size):
+    def backpropagation(self, a_l_minus, delta_l_plus, weights_l_plus, learning_rate, batch_size):
         sigma_z_l = self.d_activation(self.preactivate)
+        # print('preact: ', self.preactivate.shape)
         sigma_z_l = np.matmul(sigma_z_l, np.ones((1, sigma_z_l.shape[1])))
 
         delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus)).sum(0)
         delta_b = delta_l.sum(0)
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
+        # print(delta_w.shape)
         weights_l = np.copy(self.weights)
         self.weights = self.weights - learning_rate * delta_w/batch_size
         self.biases = self.biases - learning_rate * delta_b/batch_size

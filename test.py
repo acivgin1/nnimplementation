@@ -1,5 +1,6 @@
 from datetime import datetime
 from operations import *
+from network import *
 start_time = datetime.now()
 
 
@@ -15,12 +16,12 @@ start_time = datetime.now()
 activation = Activation.Relu
 cost = Cost.CrossEntropy
 learning_rate = 0.01
-batch_size = 2048
+batch_size = 501
 
 
-testFullyConnectedLayer = True
-testFinalLayer = True
-testNetworkFF = False
+testFullyConnectedLayer = False
+testFinalLayer = False
+testNetworkFF = True
 print_shapes = False
 
 if testFullyConnectedLayer:
@@ -118,6 +119,12 @@ if testFinalLayer:
         print('')
 
 if testNetworkFF:
-    print('Hi')
+    op_list = [('fc', (28 * 28, 250), Activation.Sigmoid),
+               ('fc', (250, 500), Activation.Relu),
+               ('fl', (500, 10), Activation.Softmax, Cost.CrossEntropy)]
+    net = Network(op_list=op_list,
+                  learning_rate=learning_rate,
+                  batch_size=batch_size)
+    net.run(ff_input=np.random.rand(batch_size, 28*28, 1), labels=np.random.rand(batch_size, 10, 1))
 
 print("--- {} seconds ---".format(datetime.now() - start_time))
