@@ -17,8 +17,8 @@ start_time = datetime.now()
 activation = Activation.Relu
 cost = Cost.CrossEntropy
 learning_rate = 0.01
-batch_size = 501
-
+batch_size = 500
+hm_epoch = 10
 
 testFullyConnectedLayer = False
 testFinalLayer = False
@@ -128,9 +128,29 @@ if testNetworkFF:
                   batch_size=batch_size)
     net.run(ff_input=np.random.rand(batch_size, 28*28, 1), labels=np.random.rand(batch_size, 10, 1))
 
-import loader
-training_data, validation_data, test_data = loader.load_data_wrapper()
 
-print(training_data.shape)
+import loader
+from tqdm import tqdm
+
+op_list = [('fc', (28 * 28, 500), Activation.Sigmoid),
+           ('fc', (500, 250), Activation.Relu),
+           ('fl', (250, 10), Activation.Softmax, Cost.CrossEntropy)]
+
+net = Network(op_list=op_list,
+              learning_rate=learning_rate,
+              batch_size=batch_size)
+
+
+for epoch in range(hm_epoch):
+    current = 0
+    acc_cost = 0
+    n = int(60000/batch_size)
+    for i in tqdm(range(n)):
+        images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
+        images = images.reshape(batch_size, -1, 1)
+        cost = net.run(ff_input=images, labels=labels)
+        acc_cost = acc_cost + cost
+    print('Epoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
+
 
 print("--- {} seconds ---".format(datetime.now() - start_time))

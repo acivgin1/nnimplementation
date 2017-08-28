@@ -46,16 +46,11 @@ def show(image):
     pyplot.show()
 
 
-def next_batch(batch_size):
-    data = list(read())
+def next_batch(batch_size, current):
+    data = list(read())[current:current+batch_size]
+    images = np.stack(np.array(v[1]) for v in data)
+    labels = np.stack(one_hot(v[0]) for v in data)
+    current = current + batch_size
+    return images, labels, current
 
-for v in read():
-    print(v[0])
 
-
-data = list(read())
-images = [np.array(v[1]) for v in data]
-labels = [one_hot(v[0]) for v in data]
-
-show(images[57])
-print(labels[57])

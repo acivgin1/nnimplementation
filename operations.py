@@ -22,8 +22,7 @@ class Cost(object):
     class CrossEntropy(object):
         @staticmethod
         def cost(labels, output):
-            return -np.nan_to_num(np.add(np.multiply(labels, np.log(output)), np.multiply((1-labels),
-                                                                                          np.log1p(-output)))).sum()
+            return -np.add(np.multiply(labels, np.log(output)), np.multiply((1-labels), np.log(1-output))).sum()
 
         @staticmethod
         def derivative(preact, labels, output, d_activation):
@@ -106,6 +105,7 @@ class FinalLayer(object):
         if cost == Cost.CrossEntropy:
             self.activation = Activation.Softmax.activation
             self.d_activation = Activation.Softmax.derivative
+            print('Using Softmax instead')
 
     def feedforward(self, ff_input):
         self.preactivate = np.add(np.matmul(self.weights, ff_input), self.biases)
@@ -120,9 +120,10 @@ class FinalLayer(object):
 
         self.weights = self.weights - learning_rate*delta_w/batch_size
         self.biases = self.biases - learning_rate*delta_b/batch_size
-
         return delta_l, weights_l
 
+    def cost(self, labels, ff_output):
+        return self.cost(labels=labels, output=ff_output)
 
 class ConvolutionalLayer(object):
     def __init__(self, window, biases, activation):

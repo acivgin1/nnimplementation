@@ -13,8 +13,8 @@ class Network(object):
                 print('fully connected {}'.format(v[1]))
                 in_nodes = v[1][0]
                 out_nodes = v[1][1]
-                weights = np.random.rand(out_nodes, in_nodes)
-                biases = np.random.rand(out_nodes, 1)
+                weights = np.random.rand(out_nodes, in_nodes) - 0.5
+                biases = np.random.rand(out_nodes, 1) - 0.5
                 if len(v) == 3:
                     fl = FullyConnectedLayer(weights=weights, biases=biases, activation=v[2])
                 elif len(v) == 2:
@@ -51,11 +51,7 @@ class Network(object):
                                                               a_l_minus=self.activations[current_layer],
                                                               learning_rate=self.learning_rate,
                                                               batch_size=self.batch_size)
-        # print("delta_l:   ", delta_l.shape)
-        # print("weights_l: ", weights_l.shape)
-        self.op_list.reverse()
-        for ops in self.op_list[1:]:
-            # print(ops.weights.shape)
+        for ops in self.op_list[::-1][1:]:
             current_layer = current_layer - 1
 
             delta_l, weights_l = ops.backpropagation(a_l_minus=self.activations[current_layer],
@@ -67,7 +63,4 @@ class Network(object):
     def run(self, ff_input, labels):
         self.feedforward(ff_input=ff_input)
         self.backpropagation(labels=labels)
-
-
-
-
+        return self.op_list[-1].cost(labels=labels, output=self.activations[-1])
