@@ -63,4 +63,8 @@ class Network(object):
     def run(self, ff_input, labels):
         self.feedforward(ff_input=ff_input)
         self.backpropagation(labels=labels)
-        return self.op_list[-1].cost(labels=labels, output=self.activations[-1])
+
+        results = np.equal(np.argmax(self.activations[-1], axis=1), np.argmax(labels, axis=1)).sum(0)
+        accuracy = results/self.batch_size
+        cost = self.op_list[-1].cost(labels=labels, output=self.activations[-1])
+        return cost, accuracy, results

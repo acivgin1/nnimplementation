@@ -105,7 +105,6 @@ class FinalLayer(object):
         if cost == Cost.CrossEntropy:
             self.activation = Activation.Softmax.activation
             self.d_activation = Activation.Softmax.derivative
-            print('Using Softmax instead')
 
     def feedforward(self, ff_input):
         self.preactivate = np.add(np.matmul(self.weights, ff_input), self.biases)

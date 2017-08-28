@@ -16,7 +16,7 @@ start_time = datetime.now()
 
 activation = Activation.Relu
 cost = Cost.CrossEntropy
-learning_rate = 0.01
+learning_rate = 0.001
 batch_size = 500
 hm_epoch = 10
 
@@ -144,13 +144,15 @@ net = Network(op_list=op_list,
 for epoch in range(hm_epoch):
     current = 0
     acc_cost = 0
+    acc_results = 0
     n = int(60000/batch_size)
     for i in tqdm(range(n)):
         images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
         images = images.reshape(batch_size, -1, 1)
-        cost = net.run(ff_input=images, labels=labels)
+        cost, accuracy, results = net.run(ff_input=images, labels=labels)
         acc_cost = acc_cost + cost
+        acc_results = acc_results + results
     print('Epoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
-
+    print('Accuracy: {}'.format(acc_results/(n*batch_size)))
 
 print("--- {} seconds ---".format(datetime.now() - start_time))
