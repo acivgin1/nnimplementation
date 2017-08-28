@@ -10,7 +10,7 @@ class Network(object):
         self.batch_size = batch_size
         for v in op_list:
             if v[0] == 'fc':
-                print('fully connected')
+                print('fully connected {}'.format(v[1]))
                 in_nodes = v[1][0]
                 out_nodes = v[1][1]
                 weights = np.random.rand(out_nodes, in_nodes)
@@ -23,7 +23,7 @@ class Network(object):
                     print('ERROR op_list has a tuple of length more than 3 or less than 2')
                 self.op_list.append(fl)
             if v[0] == 'fl':
-                print('final layer')
+                print('final layer {}'.format(v[1]))
                 in_nodes = v[1][0]
                 out_nodes = v[1][1]
                 weights = np.random.rand(out_nodes, in_nodes)
@@ -39,6 +39,7 @@ class Network(object):
                 self.op_list.append(fc)
 
     def feedforward(self, ff_input):
+        self.activations.append(ff_input)
         self.activations.append(self.op_list[0].feedforward(ff_input=ff_input))
         for ops in self.op_list[1:]:
             self.activations.append(ops.feedforward(ff_input=self.activations[-1]))
@@ -53,19 +54,16 @@ class Network(object):
         # print("delta_l:   ", delta_l.shape)
         # print("weights_l: ", weights_l.shape)
         self.op_list.reverse()
-        print(self.op_list)
         for ops in self.op_list[1:]:
             # print(ops.weights.shape)
             current_layer = current_layer - 1
+
             delta_l, weights_l = ops.backpropagation(a_l_minus=self.activations[current_layer],
                                                      delta_l_plus=delta_l,
                                                      weights_l_plus=weights_l,
                                                      learning_rate=self.learning_rate,
                                                      batch_size=self.batch_size)
-            print("delta_l:   ", delta_l.shape)
-            print("weights_l: ", weights_l.shape)
 
-            
     def run(self, ff_input, labels):
         self.feedforward(ff_input=ff_input)
         self.backpropagation(labels=labels)

@@ -10,6 +10,7 @@ start_time = datetime.now()
 # ConvolutionalLayer:       NT
 # MaxPoolLayer:             NT
 # FinalLayer:               OK
+# Network:                  OK
 
 # testing FullyConnectedLayer class
 
@@ -21,7 +22,7 @@ batch_size = 501
 
 testFullyConnectedLayer = False
 testFinalLayer = False
-testNetworkFF = True
+testNetworkFF = False
 print_shapes = False
 
 if testFullyConnectedLayer:
@@ -126,5 +127,10 @@ if testNetworkFF:
                   learning_rate=learning_rate,
                   batch_size=batch_size)
     net.run(ff_input=np.random.rand(batch_size, 28*28, 1), labels=np.random.rand(batch_size, 10, 1))
+
+import loader
+training_data, validation_data, test_data = loader.load_data_wrapper()
+
+print(training_data.shape)
 
 print("--- {} seconds ---".format(datetime.now() - start_time))
