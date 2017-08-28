@@ -13,8 +13,8 @@ class Network(object):
                 print('fully connected {}'.format(v[1]))
                 in_nodes = v[1][0]
                 out_nodes = v[1][1]
-                weights = np.random.rand(out_nodes, in_nodes) - 0.5
-                biases = np.random.rand(out_nodes, 1) - 0.5
+                weights = 0.01 * np.random.rand(out_nodes, in_nodes) - 0.005
+                biases = 0.01 * np.random.rand(out_nodes, 1) - 0.005
                 if len(v) == 3:
                     fl = FullyConnectedLayer(weights=weights, biases=biases, activation=v[2])
                 elif len(v) == 2:
@@ -26,8 +26,8 @@ class Network(object):
                 print('final layer {}'.format(v[1]))
                 in_nodes = v[1][0]
                 out_nodes = v[1][1]
-                weights = np.random.rand(out_nodes, in_nodes)
-                biases = np.random.rand(out_nodes, 1)
+                weights = 0.01 * np.random.rand(out_nodes, in_nodes) - 0.005
+                biases = 0.01 * np.random.rand(out_nodes, 1) - 0.005
                 if len(v) == 4:
                     fc = FinalLayer(weights=weights, biases=biases, activation=v[2], cost=v[3])
                 elif len(v) == 3:

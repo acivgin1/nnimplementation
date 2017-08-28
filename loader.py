@@ -48,9 +48,11 @@ def show(image):
 
 def next_batch(batch_size, current):
     data = list(read())[current:current+batch_size]
-    images = np.stack(np.array(v[1]) for v in data)
+    images = np.stack(np.array(v[1]) for v in data)/256
     labels = np.stack(one_hot(v[0]) for v in data)
     current = current + batch_size
     return images, labels, current
 
+if __name__ == '__main__':
+    images, _, _ = next_batch(1, 0)
 

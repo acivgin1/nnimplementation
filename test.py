@@ -17,7 +17,7 @@ start_time = datetime.now()
 activation = Activation.Relu
 cost = Cost.CrossEntropy
 learning_rate = 0.001
-batch_size = 500
+batch_size = 2000
 hm_epoch = 10
 
 testFullyConnectedLayer = False
@@ -132,9 +132,9 @@ if testNetworkFF:
 import loader
 from tqdm import tqdm
 
-op_list = [('fc', (28 * 28, 500), Activation.Sigmoid),
-           ('fc', (500, 250), Activation.Relu),
-           ('fl', (250, 10), Activation.Softmax, Cost.CrossEntropy)]
+op_list = [('fc', (28 * 28, 30), Activation.Relu),
+           # ('fc', (50, 30), Activation.Sigmoid),
+           ('fl', (30, 10), Activation.Softmax, Cost.CrossEntropy)]
 
 net = Network(op_list=op_list,
               learning_rate=learning_rate,
