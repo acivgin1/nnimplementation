@@ -1,8 +1,10 @@
 from datetime import datetime
-from operations import *
 from network import *
-start_time = datetime.now()
+from tqdm import tqdm
 
+import loader
+
+start_time = datetime.now()
 
 # Activation:               OK
 # Cost Functions:           OK
@@ -11,8 +13,6 @@ start_time = datetime.now()
 # MaxPoolLayer:             NT
 # FinalLayer:               OK
 # Network:                  OK
-
-# testing FullyConnectedLayer class
 
 testFullyConnectedLayer = False
 testFinalLayer = False
@@ -123,18 +123,13 @@ if testNetworkFF:
     net.run(ff_input=np.random.rand(batch_size, 28*28, 1), labels=np.random.rand(batch_size, 10, 1))
 
 
-import loader
-from tqdm import tqdm
-
-activation = Activation.Relu
 cost = Cost.CrossEntropy
-learning_rate = 0.1
-batch_size = 2000
+learning_rate = 1
+batch_size = 6000
 hm_epoch = 50
 
-op_list = [('fc', (28 * 28, 50), Activation.Relu),
-           ('fc', (50, 30), Activation.Relu),
-           ('fl', (30, 10), Activation.Relu, cost)]
+op_list = [('fc', (28 * 28, 50), Activation.Sigmoid),
+           ('fl', (50, 10), Activation.Relu, cost)]
 
 net = Network(op_list=op_list,
               learning_rate=learning_rate,
@@ -146,13 +141,21 @@ for epoch in range(hm_epoch):
     acc_cost = 0
     acc_results = 0
     n = int(60000/batch_size)
+    if epoch == 5:
+        net.learning_rate = 0.5
+    if epoch == 7:
+        net.learning_rate = 0.25
+    if epoch == 12:
+        net.learning_rate = 0.05
+
     for i in tqdm(range(n)):
         images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
         images = images.reshape(batch_size, -1, 1)
         cost, accuracy, results = net.run(ff_input=images, labels=labels)
+
         acc_cost = acc_cost + cost
         acc_results = acc_results + results
-    print('Epoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
+    print('\nEpoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
     print('Accuracy: {}'.format(acc_results/(n*batch_size)))
 
 print("--- {} seconds ---".format(datetime.now() - start_time))

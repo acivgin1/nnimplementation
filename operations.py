@@ -4,8 +4,6 @@ from scipy import signal
 
 np.seterr(divide='ignore', invalid='ignore', over='ignore')
 
-print('\033[91m' + 'WARNING: Probably could sum a_l_minus, delta_l along axis = 0, for speed up and memory saving' + '\033[0m')
-
 
 class Cost(object):
     class LMS(object):
@@ -49,7 +47,7 @@ class Activation(object):
         @staticmethod
         def derivative(preact):
             d = Activation.Sigmoid.activation(preact)
-            return d*(1-d)
+            return d*(1.0-d)
 
     class Softmax(object):
         @staticmethod
@@ -87,16 +85,18 @@ class FullyConnectedLayer(object):  # istestirano, radi
         sigma_z_l = sigma_z_l * np.ones((1, sigma_z_l.shape[1], sigma_z_l.shape[1])) * np.eye(sigma_z_l.shape[1],
                                                                                               sigma_z_l.shape[1])
 
-        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))/batch_size
+        delta_l = (learning_rate*np.matmul(sigma_z_l,
+                                           np.matmul(np.transpose(weights_l_plus),
+                                                     delta_l_plus))) / batch_size
 
         delta_b = delta_l.sum(0)
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
         # weights_l = self.weights
 
-        self.weights = self.weights - learning_rate * delta_w
+        self.weights = self.weights - delta_w
         #print(self.weights.shape)
-        self.biases = self.biases - learning_rate * delta_b
+        self.biases = self.biases - delta_b
         return delta_l, weights_l  # for use in previous layers
 
 
@@ -123,14 +123,14 @@ class FinalLayer(object):
         return self.output
 
     def backpropagation(self, y, a_l_minus, learning_rate, batch_size):
-        delta_l = self.d_cost(self.preactivate, y, self.output, self.d_activation)/batch_size
+        delta_l = (learning_rate * self.d_cost(self.preactivate, y, self.output, self.d_activation))/batch_size
         delta_b = delta_l.sum(0)
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
         # weights_l = self.weights
 
-        self.weights = self.weights - learning_rate*delta_w
-        self.biases = self.biases - learning_rate*delta_b
+        self.weights = self.weights - delta_w
+        self.biases = self.biases - delta_b
         return delta_l, weights_l
 
     def cost(self, labels, ff_output):
