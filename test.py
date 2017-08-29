@@ -14,12 +14,6 @@ start_time = datetime.now()
 
 # testing FullyConnectedLayer class
 
-activation = Activation.Relu
-cost = Cost.CrossEntropy
-learning_rate = 0.001
-batch_size = 2000
-hm_epoch = 10
-
 testFullyConnectedLayer = False
 testFinalLayer = False
 testNetworkFF = False
@@ -132,9 +126,15 @@ if testNetworkFF:
 import loader
 from tqdm import tqdm
 
-op_list = [('fc', (28 * 28, 30), Activation.Relu),
-           # ('fc', (50, 30), Activation.Sigmoid),
-           ('fl', (30, 10), Activation.Softmax, Cost.CrossEntropy)]
+activation = Activation.Relu
+cost = Cost.CrossEntropy
+learning_rate = 0.1
+batch_size = 2000
+hm_epoch = 50
+
+op_list = [('fc', (28 * 28, 50), Activation.Relu),
+           ('fc', (50, 30), Activation.Relu),
+           ('fl', (30, 10), Activation.Relu, cost)]
 
 net = Network(op_list=op_list,
               learning_rate=learning_rate,

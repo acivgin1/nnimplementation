@@ -16,8 +16,9 @@ class Cost(object):
         @staticmethod
         def derivative(preact, labels, output, d_activation):
             sigma_z_l = d_activation(preact)
-            sigma_z_l = np.matmul(sigma_z_l, np.ones((1, sigma_z_l.shape[1])))
-            return np.matmul(sigma_z_l, np.subtract(output, labels).sum(0))
+            n = sigma_z_l.shape[1]
+            sigma_z_l = sigma_z_l * np.ones((1, n, n)) * np.eye(n, n)
+            return np.matmul(sigma_z_l, np.subtract(output, labels))
 
     class CrossEntropy(object):
         @staticmethod
@@ -26,7 +27,7 @@ class Cost(object):
 
         @staticmethod
         def derivative(preact, labels, output, d_activation):
-            return np.subtract(labels, output).sum(0)
+            return np.subtract(output, labels)
 
 
 class Activation(object):
@@ -48,18 +49,13 @@ class Activation(object):
         @staticmethod
         def derivative(preact):
             d = Activation.Sigmoid.activation(preact)
-            # d = np.exp(-preact)
-            # return d/(1.0 - d)**2
             return d*(1-d)
 
     class Softmax(object):
         @staticmethod
         def activation(preact):
             d = np.exp(preact)
-            if np.equal(d, np.zeros(d.shape)).any():
-                print('belaj')
-            b = d/np.transpose(d.sum(axis=1).reshape(1, 1, -1))
-            return b
+            return d/np.transpose(d.sum(axis=1).reshape(1, 1, -1))
 
         @staticmethod
         def derivative(preact):
@@ -70,9 +66,11 @@ class Activation(object):
 
 class FullyConnectedLayer(object):  # istestirano, radi
     def __init__(self, weights, biases, activation):
+        # attributes
         self.weights = weights
         self.biases = biases
         self.preactivate = np.zeros(np.shape(biases))
+        # methods
         self.activation = activation.activation
         self.d_activation = activation.derivative
 
@@ -83,26 +81,34 @@ class FullyConnectedLayer(object):  # istestirano, radi
 
     def backpropagation(self, a_l_minus, delta_l_plus, weights_l_plus, learning_rate, batch_size):
         sigma_z_l = self.d_activation(self.preactivate)
-        sigma_z_l = np.matmul(sigma_z_l, np.ones((1, sigma_z_l.shape[1])))
+        # if np.equal(sigma_z_l, np.zeros(sigma_z_l.shape)).any():
+         #    print(' ')
 
-        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))
-        delta_b = delta_l.sum(0)/batch_size
+        sigma_z_l = sigma_z_l * np.ones((1, sigma_z_l.shape[1], sigma_z_l.shape[1])) * np.eye(sigma_z_l.shape[1],
+                                                                                              sigma_z_l.shape[1])
 
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)/batch_size
-        #weights_l = np.copy(self.weights)
-        weights_l = self.weights
+        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))/batch_size
+
+        delta_b = delta_l.sum(0)
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
+        weights_l = np.copy(self.weights)
+        # weights_l = self.weights
 
         self.weights = self.weights - learning_rate * delta_w
+        #print(self.weights.shape)
         self.biases = self.biases - learning_rate * delta_b
         return delta_l, weights_l  # for use in previous layers
 
 
 class FinalLayer(object):
     def __init__(self, weights, biases, activation, cost):
+        # attributes
         self.weights = weights
         self.biases = biases
         self.output = np.zeros(np.shape(biases))
         self.preactivate = np.zeros(np.shape(biases))
+
+        # methods
         self.activation = activation.activation
         self.d_activation = activation.derivative
         self.cost = cost.cost
@@ -117,11 +123,11 @@ class FinalLayer(object):
         return self.output
 
     def backpropagation(self, y, a_l_minus, learning_rate, batch_size):
-        delta_l = self.d_cost(self.preactivate, y, self.output, self.d_activation)
-        delta_b = delta_l.sum(0)/batch_size
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)/batch_size
-        #weights_l = np.copy(self.weights)
-        weights_l = self.weights
+        delta_l = self.d_cost(self.preactivate, y, self.output, self.d_activation)/batch_size
+        delta_b = delta_l.sum(0)
+        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
+        weights_l = np.copy(self.weights)
+        # weights_l = self.weights
 
         self.weights = self.weights - learning_rate*delta_w
         self.biases = self.biases - learning_rate*delta_b
@@ -129,6 +135,7 @@ class FinalLayer(object):
 
     def cost(self, labels, ff_output):
         return self.cost(labels=labels, output=ff_output)
+
 
 class ConvolutionalLayer(object):
     def __init__(self, window, biases, activation):
