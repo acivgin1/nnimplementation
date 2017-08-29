@@ -2,7 +2,7 @@ import numpy as np
 from math import sqrt
 from scipy import signal
 
-np.seterr(divide='ignore', invalid='ignore', over='ignore')
+# np.seterr(divide='ignore', invalid='ignore', over='ignore')
 
 
 class Cost(object):
@@ -21,7 +21,10 @@ class Cost(object):
     class CrossEntropy(object):
         @staticmethod
         def cost(labels, output):
-            return -np.nan_to_num(np.add(np.multiply(labels, np.log(output)), np.multiply((1-labels), np.log(1-output)))).sum()
+            return -np.nan_to_num(np.add(np.multiply(labels,
+                                                     np.log(output)),
+                                         np.multiply((1-labels),
+                                                     np.log(1-output)))).sum()
 
         @staticmethod
         def derivative(preact, labels, output, d_activation):
@@ -60,6 +63,16 @@ class Activation(object):
             d = np.exp(preact)
             d = d/np.transpose(d.sum(axis=1).reshape(1, 1, -1))
             return d*(1.0-d)
+
+    class Tanh(object):
+        @staticmethod
+        def activation(preact):
+            return np.tanh(preact)
+
+        @staticmethod
+        def derivative(preact):
+            d = np.tanh(preact)
+            return 1-np.square(d)
 
 
 class FullyConnectedLayer(object):  # istestirano, radi
@@ -113,9 +126,9 @@ class FinalLayer(object):
         self.d_activation = activation.derivative
         self.cost = cost.cost
         self.d_cost = cost.derivative
-        if cost == Cost.CrossEntropy:
-            self.activation = Activation.Softmax.activation
-            self.d_activation = Activation.Softmax.derivative
+        # if cost == Cost.CrossEntropy:
+        #     self.activation = Activation.Softmax.activation
+        #     self.d_activation = Activation.Softmax.derivative
 
     def feedforward(self, ff_input):
         self.preactivate = np.add(np.matmul(self.weights, ff_input), self.biases)

@@ -14,6 +14,42 @@ start_time = datetime.now()
 # FinalLayer:               OK
 # Network:                  OK
 
+cost = Cost.CrossEntropy
+learning_rate = .15
+batch_size = 200
+hm_epoch = 50
+
+op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
+           ('fl', (70, 10), Activation.Sigmoid, cost)]
+
+net = Network(op_list=op_list,
+              learning_rate=learning_rate,
+              batch_size=batch_size)
+
+
+for epoch in range(hm_epoch):
+    current = 0
+    acc_cost = 0
+    acc_results = 0
+    n = int(60000/batch_size)
+    if epoch == 5:
+        net.learning_rate = 0.06
+    if epoch == 10:
+        net.learning_rate = 0.005
+    for i in tqdm(range(n)):
+        images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
+        images = images.reshape(batch_size, -1, 1)
+
+        cost, accuracy, results = net.run(ff_input=images, labels=labels)
+
+        acc_cost = acc_cost + cost
+        acc_results = acc_results + results
+    print('\nEpoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
+    print('Accuracy: {}'.format(acc_results/(n*batch_size)))
+
+print("--- {} seconds ---".format(datetime.now() - start_time))
+
+
 testFullyConnectedLayer = False
 testFinalLayer = False
 testNetworkFF = False
@@ -121,41 +157,3 @@ if testNetworkFF:
                   learning_rate=learning_rate,
                   batch_size=batch_size)
     net.run(ff_input=np.random.rand(batch_size, 28*28, 1), labels=np.random.rand(batch_size, 10, 1))
-
-
-cost = Cost.CrossEntropy
-learning_rate = 1
-batch_size = 6000
-hm_epoch = 50
-
-op_list = [('fc', (28 * 28, 50), Activation.Sigmoid),
-           ('fl', (50, 10), Activation.Relu, cost)]
-
-net = Network(op_list=op_list,
-              learning_rate=learning_rate,
-              batch_size=batch_size)
-
-
-for epoch in range(hm_epoch):
-    current = 0
-    acc_cost = 0
-    acc_results = 0
-    n = int(60000/batch_size)
-    if epoch == 5:
-        net.learning_rate = 0.5
-    if epoch == 7:
-        net.learning_rate = 0.25
-    if epoch == 12:
-        net.learning_rate = 0.05
-
-    for i in tqdm(range(n)):
-        images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
-        images = images.reshape(batch_size, -1, 1)
-        cost, accuracy, results = net.run(ff_input=images, labels=labels)
-
-        acc_cost = acc_cost + cost
-        acc_results = acc_results + results
-    print('\nEpoch {} of {}, cost: {}'.format(epoch, hm_epoch, acc_cost))
-    print('Accuracy: {}'.format(acc_results/(n*batch_size)))
-
-print("--- {} seconds ---".format(datetime.now() - start_time))
