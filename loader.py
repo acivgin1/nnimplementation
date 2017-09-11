@@ -1,6 +1,8 @@
 import struct
 import numpy as np
 import random
+
+
 def one_hot(index):
     one_hot = np.zeros((10, 1))
     one_hot[index] = 1.0

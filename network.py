@@ -88,7 +88,7 @@ class Network(object):
 
         results = np.equal(np.argmax(self.activations[-1], axis=1), np.argmax(labels, axis=1)).sum(0)
         accuracy = results/self.batch_size
-        cost = self.op_list[-1].cost(labels=labels, output=self.activations[-1])
+        cost = self.op_list[-1].cost(labels=labels, output=self.activations[-1])/self.batch_size
         costL2 = 0
         for v in self.op_list:
             costL2 = costL2 + self.beta*np.square(v.weights).sum()

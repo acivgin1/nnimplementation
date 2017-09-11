@@ -1,16 +1,15 @@
 from datetime import datetime
 from network import *
-from tqdm import tqdm
 
 import loader
 
 start_time = datetime.now()
 
 cost = Cost.CrossEntropy
-learning_rate = 4
-batch_size = 2000
+learning_rate = .15
+batch_size = 6000
 hm_epoch = 50
-beta = 0.007
+beta = 0
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -20,15 +19,15 @@ net = Network(op_list=op_list,
               batch_size=batch_size,
               beta=beta)
 
-net.load('saves/save')
-
+net.load('saves/save0')
+# TODO add testing network
 for epoch in range(hm_epoch):
     current = 0
     acc_cost = 0
     acc_costL2 = 0
     acc_results = 0
     n = int(60000/batch_size)
-    for i in tqdm(range(n)):
+    for i in range(n):
         images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
         images = images.reshape(batch_size, -1, 1)
 
@@ -36,8 +35,11 @@ for epoch in range(hm_epoch):
         acc_costL2 = acc_costL2 + costL2
         acc_cost = acc_cost + cost
         acc_results = acc_results + results
-    print('\nEpoch {} of {}, cost: {}, cost with L2: {}'.format(epoch, hm_epoch, acc_cost, acc_cost+acc_costL2))
-    print('Accuracy: {}'.format(acc_results/(n*batch_size)))
+    print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
+                                                              hm_epoch,
+                                                              round(acc_cost, 3),
+                                                              round(acc_cost+acc_costL2, 3)))
+    print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
     net.save('saves/save'+str(epoch))
     net.save('saves/save')
 print("--- {} seconds ---".format(datetime.now() - start_time))
