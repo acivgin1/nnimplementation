@@ -100,12 +100,10 @@ class FullyConnectedLayer(object):  # istestirano, radi
         sigma_z_l = sigma_z_l * np.ones((1, sigma_z_l.shape[1], sigma_z_l.shape[1])) * np.eye(sigma_z_l.shape[1],
                                                                                               sigma_z_l.shape[1])
 
-        delta_l = (learning_rate*np.matmul(sigma_z_l,
-                                           np.matmul(np.transpose(weights_l_plus),
-                                                     delta_l_plus))) / batch_size
+        delta_l = np.matmul(sigma_z_l, np.matmul(np.transpose(weights_l_plus), delta_l_plus))
 
-        delta_b = delta_l.sum(0)
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
+        delta_b = learning_rate*delta_l.sum(0)/batch_size
+        delta_w = learning_rate*np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)/batch_size
         weights_l = np.copy(self.weights)
 
         self.weights = self.weights*(1-beta/batch_size) - delta_w
@@ -137,9 +135,9 @@ class FinalLayer(object):
         return self.output
 
     def backpropagation(self, y, a_l_minus, learning_rate, batch_size, beta):
-        delta_l = (learning_rate * self.d_cost(self.preactivate, y, self.output, self.d_activation))/batch_size
-        delta_b = delta_l.sum(0)
-        delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
+        delta_l = self.d_cost(self.preactivate, y, self.output, self.d_activation)
+        delta_b = learning_rate*delta_l.sum(0)/batch_size
+        delta_w = learning_rate*np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)/batch_size
         weights_l = np.copy(self.weights)
 
         self.weights = self.weights*(1-beta/batch_size) - delta_w

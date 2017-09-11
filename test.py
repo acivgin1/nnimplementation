@@ -6,10 +6,10 @@ import loader
 start_time = datetime.now()
 
 cost = Cost.CrossEntropy
-learning_rate = .15
+learning_rate = .07
 batch_size = 5000
-hm_epoch = 50
-beta = 0
+hm_epoch = 100
+beta = 0.00003
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -20,6 +20,7 @@ net = Network(op_list=op_list,
               beta=beta)
 
 net.load('saves/save0')
+
 
 def test():
     n = int(10000 / batch_size)
@@ -61,6 +62,7 @@ def train():
         net.save('saves/save')
     print("--- {} seconds ---".format(datetime.now() - start_time))
 
+test()
 train()
 
 # testFullyConnectedLayer = False
