@@ -7,7 +7,7 @@ start_time = datetime.now()
 
 cost = Cost.CrossEntropy
 learning_rate = .15
-batch_size = 6000
+batch_size = 5000
 hm_epoch = 50
 beta = 0
 
@@ -20,30 +20,48 @@ net = Network(op_list=op_list,
               beta=beta)
 
 net.load('saves/save0')
-# TODO add testing network
-for epoch in range(hm_epoch):
-    current = 0
-    acc_cost = 0
-    acc_costL2 = 0
-    acc_results = 0
-    n = int(60000/batch_size)
-    for i in range(n):
-        images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
-        images = images.reshape(batch_size, -1, 1)
 
-        cost, costL2, accuracy, results = net.run(ff_input=images, labels=labels)
-        acc_costL2 = acc_costL2 + costL2
+def test():
+    n = int(10000 / batch_size)
+    acc_cost = 0
+    acc_results = 0
+    current = 0
+
+    for i in range(n):
+        images, labels, current = loader.next_batch(batch_size=batch_size, current=current, dataset='testing')
+        images = images.reshape(batch_size, -1, 1)
+        cost, _, accuracy, results = net.run(ff_input=images, labels=labels)
         acc_cost = acc_cost + cost
         acc_results = acc_results + results
-    print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
-                                                              hm_epoch,
-                                                              round(acc_cost, 3),
-                                                              round(acc_cost+acc_costL2, 3)))
-    print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
-    net.save('saves/save'+str(epoch))
-    net.save('saves/save')
-print("--- {} seconds ---".format(datetime.now() - start_time))
+    print('Test dataset cost: {}'.format(acc_cost))
+    print('Test dataset accuracy: {}'.format(acc_results / (n * batch_size)))
 
+
+def train():
+    for epoch in range(hm_epoch):
+        current = 0
+        acc_cost = 0
+        acc_costL2 = 0
+        acc_results = 0
+        n = int(60000/batch_size)
+        for i in range(n):
+            images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
+            images = images.reshape(batch_size, -1, 1)
+
+            cost, costL2, accuracy, results = net.run(ff_input=images, labels=labels)
+            acc_costL2 = acc_costL2 + costL2
+            acc_cost = acc_cost + cost
+            acc_results = acc_results + results
+        print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
+                                                                  hm_epoch,
+                                                                  round(acc_cost, 3),
+                                                                  round(acc_cost+acc_costL2, 3)))
+        print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
+        net.save('saves/save'+str(epoch))
+        net.save('saves/save')
+    print("--- {} seconds ---".format(datetime.now() - start_time))
+
+train()
 
 # testFullyConnectedLayer = False
 # testFinalLayer = False
