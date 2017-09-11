@@ -55,13 +55,15 @@ class Activation(object):
     class Softmax(object):
         @staticmethod
         def activation(preact):
-            d = np.exp(preact)
-            return d/np.transpose(d.sum(axis=1).reshape(1, 1, -1))
+            shiftpreact = preact - np.max(preact)
+            exps = np.exp(shiftpreact)
+            return exps/np.transpose(exps.sum(axis=1).reshape(1, 1, -1))
 
         @staticmethod
         def derivative(preact):
-            d = np.exp(preact)
-            d = d/np.transpose(d.sum(axis=1).reshape(1, 1, -1))
+            shiftpreact = preact - np.max(preact)
+            exps = np.exp(shiftpreact)
+            d = exps / np.transpose(exps.sum(axis=1).reshape(1, 1, -1))
             return d*(1.0-d)
 
     class Tanh(object):
