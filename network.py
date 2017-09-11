@@ -2,11 +2,12 @@ from operations import *
 
 
 class Network(object):
-    def __init__(self, op_list, learning_rate, batch_size):
+    def __init__(self, op_list, learning_rate, batch_size, beta):
         self.op_list = []
         self.activations = []
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self.beta = beta
         for v in op_list:
             if v[0] == 'fc':
                 print('fully connected {}'.format(v[1]))
@@ -49,7 +50,8 @@ class Network(object):
         delta_l, weights_l = self.op_list[-1].backpropagation(y=labels,
                                                               a_l_minus=self.activations[current_layer],
                                                               learning_rate=self.learning_rate,
-                                                              batch_size=self.batch_size)
+                                                              batch_size=self.batch_size,
+                                                              beta=self.beta)
         for ops in self.op_list[::-1][1:]:
             current_layer = current_layer - 1
 
@@ -57,7 +59,28 @@ class Network(object):
                                                      delta_l_plus=delta_l,
                                                      weights_l_plus=weights_l,
                                                      learning_rate=self.learning_rate,
-                                                     batch_size=self.batch_size)
+                                                     batch_size=self.batch_size,
+                                                     beta=self.beta)
+
+    def save(self, filename):
+        weights_list = []
+        biases_list = []
+        for v in self.op_list:
+            weights_list.append(v.weights)
+            biases_list.append(v.biases)
+        np.savez(filename + 'weights', weights_list)
+        np.savez(filename + 'biases', biases_list)
+
+    def load(self, filename):
+        npz_weights = np.load(filename + 'weights.npz')
+        npz_biases = np.load(filename + 'biases.npz')
+        weights = npz_weights['arr_0']
+        biases = npz_biases['arr_0']
+        i = 0
+        for v in self.op_list:
+            v.weights = weights[i]
+            v.biases = biases[i]
+            i = i + 1
 
     def run(self, ff_input, labels):
         self.feedforward(ff_input=ff_input)
@@ -66,5 +89,8 @@ class Network(object):
         results = np.equal(np.argmax(self.activations[-1], axis=1), np.argmax(labels, axis=1)).sum(0)
         accuracy = results/self.batch_size
         cost = self.op_list[-1].cost(labels=labels, output=self.activations[-1])
+        costL2 = 0
+        for v in self.op_list:
+            costL2 = costL2 + self.beta*np.square(v.weights).sum()
         self.activations = []
-        return cost, accuracy, results
+        return cost, costL2, accuracy, results

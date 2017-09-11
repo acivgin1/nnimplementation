@@ -90,7 +90,7 @@ class FullyConnectedLayer(object):  # istestirano, radi
         output = self.activation(self.preactivate)
         return output  # for use in next layers and backpropagation
 
-    def backpropagation(self, a_l_minus, delta_l_plus, weights_l_plus, learning_rate, batch_size):
+    def backpropagation(self, a_l_minus, delta_l_plus, weights_l_plus, learning_rate, batch_size, beta):
         sigma_z_l = self.d_activation(self.preactivate)
         # if np.equal(sigma_z_l, np.zeros(sigma_z_l.shape)).any():
          #    print(' ')
@@ -105,9 +105,8 @@ class FullyConnectedLayer(object):  # istestirano, radi
         delta_b = delta_l.sum(0)
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
-        # weights_l = self.weights
 
-        self.weights = self.weights - delta_w
+        self.weights = self.weights*(1-beta/batch_size) - delta_w
         #print(self.weights.shape)
         self.biases = self.biases - delta_b
         return delta_l, weights_l  # for use in previous layers
@@ -135,14 +134,13 @@ class FinalLayer(object):
         self.output = self.activation(self.preactivate)
         return self.output
 
-    def backpropagation(self, y, a_l_minus, learning_rate, batch_size):
+    def backpropagation(self, y, a_l_minus, learning_rate, batch_size, beta):
         delta_l = (learning_rate * self.d_cost(self.preactivate, y, self.output, self.d_activation))/batch_size
         delta_b = delta_l.sum(0)
         delta_w = np.matmul(delta_l, np.transpose(a_l_minus, (0, 2, 1))).sum(0)
         weights_l = np.copy(self.weights)
-        # weights_l = self.weights
 
-        self.weights = self.weights - delta_w
+        self.weights = self.weights*(1-beta/batch_size) - delta_w
         self.biases = self.biases - delta_b
         return delta_l, weights_l
 
