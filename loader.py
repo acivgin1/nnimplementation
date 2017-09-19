@@ -47,15 +47,24 @@ def show(image):
     pyplot.show()
 
 
+training = list(read(dataset='training'))
+test = list(read(dataset='testing'))
+
+
 def next_batch(batch_size, current, dataset="training"):
-    data = list(read(dataset=dataset))
-    if dataset == "training":
-        random.shuffle(data)
-    data = data[current:current+batch_size]
+    if current == 0:
+        random.shuffle(training)
+    if dataset == 'training':
+        data = training[current:current+batch_size]
+    else:
+        data = test[current:current+batch_size]
+
     images = np.stack(np.array(v[1]) for v in data)/256
     labels = np.stack(one_hot(v[0]) for v in data)
     current = current + batch_size
     return images, labels, current
+
+
 
 if __name__ == '__main__':
     images, _, _ = next_batch(1, 0)

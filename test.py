@@ -7,10 +7,10 @@ import loader
 start_time = datetime.now()
 
 cost = Cost.CrossEntropy
-learning_rate = .07
-batch_size = 5000
+learning_rate = .3
+batch_size = 6000
 hm_epoch = 100
-beta = 0.00002
+beta = 0.00005
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -20,23 +20,23 @@ net = Network(op_list=op_list,
               batch_size=batch_size,
               beta=beta)
 
-net.load('saves/save36')
+net.load('saves/save99')
 
 
 def test():
-    n = int(10000 / batch_size)
+    n = int(2)
     acc_cost = 0
     acc_results = 0
     current = 0
 
     for i in range(n):
-        images, labels, current = loader.next_batch(batch_size=batch_size, current=current, dataset='testing')
-        images = images.reshape(batch_size, -1, 1)
+        images, labels, current = loader.next_batch(batch_size=5000, current=current, dataset='testing')
+        images = images.reshape(5000, -1, 1)
         cost, _, accuracy, results = net.run(ff_input=images, labels=labels)
         acc_cost = acc_cost + cost
         acc_results = acc_results + results
     print('Test dataset cost: {}'.format(acc_cost))
-    print('Test dataset accuracy: {}'.format(acc_results / (n * batch_size)))
+    print('Test dataset accuracy: {}'.format(acc_results / (n * 5000)))
 
 
 def train():
@@ -46,7 +46,7 @@ def train():
         acc_costL2 = 0
         acc_results = 0
         n = int(60000/batch_size)
-        for _ in tqdm(range(n)):
+        for _ in range(n):
             images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
             images = images.reshape(batch_size, -1, 1)
 
@@ -57,8 +57,9 @@ def train():
         print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
                                                                   hm_epoch,
                                                                   round(acc_cost, 3),
-                                                                  round(acc_cost+acc_costL2, 3)))
-        print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
+                                                                  round(acc_cost+acc_costL2, 3)),
+              end=' ')
+        print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 5)))
         net.save('saves/save'+str(epoch))
         net.save('saves/save')
     print("--- {} seconds ---".format(datetime.now() - start_time))
