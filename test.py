@@ -1,5 +1,6 @@
 from datetime import datetime
 from network import *
+from tqdm import tqdm
 
 import loader
 
@@ -9,7 +10,7 @@ cost = Cost.CrossEntropy
 learning_rate = .07
 batch_size = 5000
 hm_epoch = 100
-beta = 0.00003
+beta = 0.00002
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -19,7 +20,7 @@ net = Network(op_list=op_list,
               batch_size=batch_size,
               beta=beta)
 
-net.load('saves/save0')
+net.load('saves/save36')
 
 
 def test():
@@ -45,7 +46,7 @@ def train():
         acc_costL2 = 0
         acc_results = 0
         n = int(60000/batch_size)
-        for i in range(n):
+        for _ in tqdm(range(n)):
             images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
             images = images.reshape(batch_size, -1, 1)
 
