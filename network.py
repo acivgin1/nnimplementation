@@ -93,4 +93,10 @@ class Network(object):
         for v in self.op_list:
             costL2 = costL2 + self.beta*np.square(v.weights).sum()
         self.activations = []
-        return cost, costL2, accuracy, results
+        weights_data = []
+        biases_data = []
+        for v in self.op_list:
+            weights_data.append(np.array([v.weights.max(), v.weights.min(), v.weights.mean(), v.weights.std()]))
+            biases_data.append(np.array([v.biases.max(), v.biases.min(), v.biases.mean(), v.biases.std()]))
+
+        return cost, costL2, accuracy, results, weights_data, biases_data

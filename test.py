@@ -7,10 +7,10 @@ import loader
 start_time = datetime.now()
 
 cost = Cost.CrossEntropy
-learning_rate = .07
-batch_size = 5000
+learning_rate = .07  # 1, 0.2
+batch_size = 6000
 hm_epoch = 100
-beta = 0.00002
+beta = 0.00007  # 0.00002
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -20,7 +20,7 @@ net = Network(op_list=op_list,
               batch_size=batch_size,
               beta=beta)
 
-net.load('saves/save36')
+net.load('saves/save')
 
 
 def test():
@@ -40,30 +40,54 @@ def test():
 
 
 def train():
+    w1 = np.loadtxt('data/w1', skiprows=1)
+    w2 = np.loadtxt('data/w2', skiprows=1)
+    b1 = np.loadtxt('data/b1', skiprows=1)
+    b2 = np.loadtxt('data/b2', skiprows=1)
+    cost_and_acc = np.loadtxt('data/cac', skiprows=1)
     for epoch in range(hm_epoch):
         current = 0
         acc_cost = 0
         acc_costL2 = 0
         acc_results = 0
+
         n = int(60000/batch_size)
+
         for _ in tqdm(range(n)):
             images, labels, current = loader.next_batch(batch_size=batch_size, current=current)
             images = images.reshape(batch_size, -1, 1)
 
-            cost, costL2, accuracy, results = net.run(ff_input=images, labels=labels)
+            cost, costL2, accuracy, results, w_data, b_data = net.run(ff_input=images, labels=labels)
             acc_costL2 = acc_costL2 + costL2
             acc_cost = acc_cost + cost
             acc_results = acc_results + results
+
+            # BEGIN Save data
+            w1 = np.concatenate((w1, w_data[0].reshape(1, 4)))
+            w2 = np.concatenate((w2, w_data[1].reshape(1, 4)))
+
+            b1 = np.concatenate((b1, b_data[0].reshape(1, 4)))
+            b2 = np.concatenate((b2, b_data[1].reshape(1, 4)))
+
+            cost_and_acc = np.concatenate((cost_and_acc, np.array((cost, costL2, accuracy)).reshape(1, 3)))
+            # END Save data
         print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
                                                                   hm_epoch,
                                                                   round(acc_cost, 3),
                                                                   round(acc_cost+acc_costL2, 3)))
         print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
-        net.save('saves/save'+str(epoch))
+        net.save('saves/save'+str(epoch+25))
         net.save('saves/save')
+
+        np.savetxt('data/w1',   w1,             fmt='%3.7f',    header='Weights 1')
+        np.savetxt('data/w2',   w2,             fmt='%3.7f',    header='Weights 2')
+        np.savetxt('data/b1',   b1,             fmt='%3.7f',    header='Biases 1')
+        np.savetxt('data/b2',   b2,             fmt='%3.7f',    header='Biases 2')
+        np.savetxt('data/cac',  cost_and_acc,   fmt='%3.7f',    header='Cost and Accuracy')
+
     print("--- {} seconds ---".format(datetime.now() - start_time))
 
-test()
+# test()
 train()
 
 # testFullyConnectedLayer = False
