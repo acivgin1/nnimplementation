@@ -1,16 +1,17 @@
 from datetime import datetime
 from network import *
 from tqdm import tqdm
+from math import exp
 
 import loader
 
 start_time = datetime.now()
 
 cost = Cost.CrossEntropy
-learning_rate = .07  # 1, 0.2
+learning_rate = .1
 batch_size = 6000
 hm_epoch = 100
-beta = 0.00007  # 0.00002
+beta = 0.0002
 
 op_list = [('fc', (28 * 28, 70), Activation.Sigmoid),
            ('fl', (70, 10), Activation.Sigmoid, cost)]
@@ -24,27 +25,27 @@ net.load('saves/save')
 
 
 def test():
-    n = int(10000 / batch_size)
+    n = int(10000 / 5000)
     acc_cost = 0
     acc_results = 0
     current = 0
 
     for i in range(n):
-        images, labels, current = loader.next_batch(batch_size=batch_size, current=current, dataset='testing')
-        images = images.reshape(batch_size, -1, 1)
-        cost, _, accuracy, results = net.run(ff_input=images, labels=labels)
+        images, labels, current = loader.next_batch(batch_size=5000, current=current, dataset='testing')
+        images = images.reshape(5000, -1, 1)
+        cost, _, accuracy, results, _, _ = net.run(ff_input=images, labels=labels)
         acc_cost = acc_cost + cost
         acc_results = acc_results + results
     print('Test dataset cost: {}'.format(acc_cost))
-    print('Test dataset accuracy: {}'.format(acc_results / (n * batch_size)))
+    print('Test dataset accuracy: {}'.format(acc_results / (n * 5000)))
 
 
 def train():
-    w1 = np.loadtxt('data/w1', skiprows=1)
-    w2 = np.loadtxt('data/w2', skiprows=1)
-    b1 = np.loadtxt('data/b1', skiprows=1)
-    b2 = np.loadtxt('data/b2', skiprows=1)
-    cost_and_acc = np.loadtxt('data/cac', skiprows=1)
+    w1 = np.loadtxt('data/w1', skiprows=1).reshape((-1, 4))
+    w2 = np.loadtxt('data/w2', skiprows=1).reshape((-1, 4))
+    b1 = np.loadtxt('data/b1', skiprows=1).reshape((-1, 4))
+    b2 = np.loadtxt('data/b2', skiprows=1).reshape((-1, 4))
+    cost_and_acc = np.loadtxt('data/cac', skiprows=1).reshape((-1, 3))
     for epoch in range(hm_epoch):
         current = 0
         acc_cost = 0
@@ -74,9 +75,10 @@ def train():
         print('Epoch {} of {}, cost: {}, cost with L2: {}'.format(epoch,
                                                                   hm_epoch,
                                                                   round(acc_cost, 3),
-                                                                  round(acc_cost+acc_costL2, 3)))
+                                                                  round(acc_cost+acc_costL2, 3)),
+              end=' ')
         print('Accuracy: {}'.format(round(int(acc_results)/(n*batch_size), 3)))
-        net.save('saves/save'+str(epoch+25))
+        net.save('saves/save'+str(epoch+164))
         net.save('saves/save')
 
         np.savetxt('data/w1',   w1,             fmt='%3.7f',    header='Weights 1')
@@ -87,7 +89,7 @@ def train():
 
     print("--- {} seconds ---".format(datetime.now() - start_time))
 
-# test()
+test()
 train()
 
 # testFullyConnectedLayer = False
